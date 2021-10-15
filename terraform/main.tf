@@ -1,12 +1,12 @@
+# Setup azurerm as a state backend
 terraform {
   backend "azurerm" {
   }
 }
 
+# Configure the Microsoft Azure Provider
 provider "azurerm" {
-  version = "~> 2.62.0"
-  features {
-  }
+  features {}
 }
 
 data "azurerm_client_config" "current" {}
@@ -94,5 +94,6 @@ output "client_certificate" {
 }
 
 output "kube_config" {
+  sensitive = true
   value = azurerm_kubernetes_cluster.bdcc.kube_config_raw
 }
