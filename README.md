@@ -1,23 +1,28 @@
 # Kafka Connect Integration and Deployment
 
-This document provides a comprehensive guide for setting up and deploying Kafka Connect in a Kubernetes environment using Terraform. The primary objective is to demonstrate the integration of Kafka with external data sources and customize Kafka Connect for specific data transformation tasks. The deployment leverages Azure Kubernetes Service (AKS) and Azure Blob Storage for practical implementation.
+This project provides a comprehensive guide for setting up and deploying Kafka Connect in a Kubernetes environment using Terraform. The primary objective is to demonstrate the integration of Kafka with external data sources and customize Kafka Connect for specific data transformation tasks. The deployment leverages Azure Kubernetes Service (AKS) and Azure Blob Storage for practical implementation.
 
 ---
 
 ## Table of Contents
+
 - [Introduction](#introduction)
 - [Technologies and Tools](#technologies-and-tools)
 - [Preparation Steps](#preparation-steps)
   - [Infrastructure Setup](#infrastructure-setup)
   - [Cluster Configuration](#cluster-configuration)
+- [Kafka Connect Deployment](#kafka-connect-deployment)
+  - [Build and Push Docker Image](#build-and-push-docker-image)
+  - [Deploy Kafka Components](#deploy-kafka-components)
+  - [View Confluent Control Center](#view-confluent-control-center)
 - [Kafka Connect Setup](#kafka-connect-setup)
-  - [Data Source Configuration](#data-source-configuration)
-  - [Applying Data Transformation](#applying-data-transformation)
-- [Automation Pipeline](#automation-pipeline)
-- [Resource Cleanup](#resource-cleanup)
-- [Expected Deliverables](#expected-deliverables)
-- [Visual Proofs](#visual-proofs)
-- [Assessment Criteria](#assessment-criteria)
+  - [Create Kafka Topics](#create-kafka-topics)
+  - [Upload Data to Azure Blob Storage](#upload-data-to-azure-blob-storage)
+  - [Configure and Verify Kafka Connect Plugins](#configure-and-verify-kafka-connect-plugins)
+- [Message Schema Verification](#message-schema-verification)
+- [Summary](#summary)
+
+
 
 ---
 
@@ -119,7 +124,11 @@ The following technologies are utilized for completing the project:
     2. **Isolation**: Keeps Kafka resources organized and separated from other applications.
     3. **Simplified Management**: Prevents the need to repeatedly specify the `--namespace` flag in Helm and Kubernetes commands.
 
-5. **Build and Push Docker Image for Azure Connector**: In this step, a custom Docker image for the Azure Blob Storage connector is built and pushed to Docker Hub. This decision was made because pulling the image from Azure Container Registry (ACR) resulted in errors. Instead, Docker Hub is used as the image source in the `.yaml` configuration. Since a Mac M1 (ARM64) system is being used, the image was built for both ARM64 and AMD64 architectures. Due to compatibility issues, the ARM64 architecture image was pulled using its SHA256 hash.
+## Kafka Connect Deployment
+
+### Build and Push Docker Image
+
+In this step, a custom Docker image for the Azure Blob Storage connector is built and pushed to Docker Hub. This decision was made because pulling the image from Azure Container Registry (ACR) resulted in errors. Instead, Docker Hub is used as the image source in the `.yaml` configuration. Since a Mac M1 (ARM64) system is being used, the image was built for both ARM64 and AMD64 architectures. Due to compatibility issues, the ARM64 architecture image was pulled using its SHA256 hash.
 
    
    #### Steps to Build and Push the Image
@@ -138,32 +147,32 @@ The following technologies are utilized for completing the project:
        ```bash
        docker pull dumanapo/my-azure-connector:1.0.0
        ```
-       ![Alt Text or Description](images/image7.png)
+  ![Alt Text or Description](images/image7.png)
 
 
-6. **Deploy Kafka Components**:Apply the Kubernetes manifest to deploy Kafka:
+### Deploy Kafka Components
 
-    1. **Pull the ARM64 Image**: Since the Mac M1 uses ARM64, the image is referenced by its SHA256 hash in the .yaml file:
+1. **Pull the ARM64 Image**: Since the Mac M1 uses ARM64, the image is referenced by its SHA256 hash in the .yaml file:
        ```yaml
        image: dumanapo/my-azure-connector@sha256:<arm64-sha256-hash>
        ```
-    2. **Reason for Using Docker Hub**: Pulling the image from Docker Hub resolved issues encountered when pulling from ACR. Despite attempts to use methods like buildx and Rosetta 2 for AMD64 compatibility, these approaches were unsuccessful.
+2. **Reason for Using Docker Hub**: Pulling the image from Docker Hub resolved issues encountered when pulling from ACR. Despite attempts to use methods like buildx and Rosetta 2 for AMD64 compatibility, these approaches were unsuccessful.
 
-    3. **Apply the Updated ```.yaml``` Configuration:**: Deploy the updated configuration to Kubernetes:
+3. **Apply the Updated ```.yaml``` Configuration:**: Deploy the updated configuration to Kubernetes:
        ```bash
        kubectl apply -f confluent-platform.yaml
        kubectl apply -f producer-app-data.yaml
        ```
   
-    4. **Check that everything is deployed::**:
+4. **Check that everything is deployed::**:
        ```bash
        kubectl get pods -o wide 
        ```
        By building and pushing the image for both architectures and referencing it by SHA256 hash, compatibility issues on Mac M1 (ARM64) systems were addressed effectively.
 
-       ![Alt Text or Description](images/image8.png)
+      ![Alt Text or Description](images/image8.png)
 
-### View Confluent Control Center and Create Kafka Topics
+### View Confluent Control Center
 
 #### Step 1: Access the Confluent Control Center
 
@@ -183,7 +192,9 @@ The Confluent Control Center is a graphical interface for managing and monitorin
   
    ![Alt Text or Description](images/image13.png)
 
-#### Step 2: Create Kafka Topics
+## Kafka Connect Setup
+
+### Create Kafka Topics
 A Kafka topic named expedia is created to ingest data from Azure Blob Storage. The topic requires at least 3 partitions since there are 3 partitions in the Azure Blob Storage Dataset. If the Kafka CLI is not available locally, we can execute the command directly inside a Kafka Pod.
 
 ##### 1: Enter the Kafka Pod
@@ -295,7 +306,43 @@ The message schema defines how data from Azure Blob Storage is structured when s
 ![Alt Text or Description](images/image18.png)
 
 
+## Summary
 
+This project focuses on deploying and configuring **Kafka Connect** in an **Azure Kubernetes Service (AKS)** environment to build a data pipeline for ingesting and transforming data from Azure Blob Storage.
+
+---
+
+### Key Highlights:
+
+#### Infrastructure Setup:
+- Provisioned **AKS** and Azure resources using **Terraform**.
+- Created a resource group, storage account, and blob container to manage state files and data.
+
+#### Cluster Configuration:
+- Configured Kubernetes namespace and context for Kafka.
+- Installed **Confluent for Kubernetes** using **Helm** for a production-ready Kafka setup.
+
+#### Kafka Connect Deployment:
+- Built and pushed a custom **Docker image** for the Azure Blob Storage Connector.
+- Deployed Kafka components and verified their status on Kubernetes.
+
+#### Data Pipeline Setup:
+- Created a Kafka topic (`expedia`) to ingest data from Azure Blob Storage.
+- Uploaded the dataset to Azure Blob Storage using **Microsoft Azure Storage Explorer**.
+
+#### Connector Configuration:
+- Configured and deployed the Azure Blob Storage Source Connector using Kafka Connect REST API.
+- Applied a `MaskField` transformation to anonymize timestamp data.
+
+#### Monitoring and Verification:
+- Used the **Confluent Control Center** and Kafka Connect logs to monitor the system.
+- Verified that data was transformed and ingested successfully.
+
+---
+
+### Outcome:
+
+The project successfully demonstrates a scalable Kafka Connect deployment on AKS with automated infrastructure setup, efficient data ingestion, and transformation. It offers practical experience in managing cloud-native streaming data platforms and integrating Kafka with Azure services.
 
 
 
