@@ -19,7 +19,6 @@ This project provides a comprehensive guide for setting up and deploying Kafka C
   - [Create Kafka Topics](#create-kafka-topics)
   - [Upload Data to Azure Blob Storage](#upload-data-to-azure-blob-storage)
   - [Configure and Verify Kafka Connect Plugins](#configure-and-verify-kafka-connect-plugins)
-- [Message Schema Verification](#message-schema-verification)
 - [Summary](#summary)
 
 
