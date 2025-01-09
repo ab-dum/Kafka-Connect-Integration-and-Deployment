@@ -1,6 +1,10 @@
 # Setup azurerm as a state backend
 terraform {
   backend "azurerm" {
+    resource_group_name  = "terrstate"
+    storage_account_name = "terrstatekafkaconnect"
+    container_name       = "terrstatecontainer"
+    key                  = "terraform.tfstate" 
   }
 }
 
@@ -16,7 +20,7 @@ resource "azurerm_resource_group" "bdcc" {
   location = var.LOCATION
 
   lifecycle {
-    prevent_destroy = true
+    prevent_destroy = false
   }
 
   tags = {
@@ -42,7 +46,7 @@ resource "azurerm_storage_account" "bdcc" {
   }
 
   lifecycle {
-    prevent_destroy = true
+    prevent_destroy = false
   }
 
   tags = {
@@ -59,7 +63,7 @@ resource "azurerm_storage_data_lake_gen2_filesystem" "gen2_data" {
   storage_account_id = azurerm_storage_account.bdcc.id
 
   lifecycle {
-    prevent_destroy = true
+    prevent_destroy = false
   }
 }
 
@@ -75,8 +79,12 @@ resource "azurerm_kubernetes_cluster" "bdcc" {
 
   default_node_pool {
     name       = "default"
-    node_count = 1
-    vm_size    = "Standard_D2_v2"
+    node_count = 4
+    vm_size    = "Standard_D12_v2"
+    enable_auto_scaling = true  
+    min_count           = 1  
+    max_count           = 4
+
   }
 
   identity {
@@ -97,3 +105,6 @@ output "kube_config" {
   sensitive = true
   value = azurerm_kubernetes_cluster.bdcc.kube_config_raw
 }
+
+
+

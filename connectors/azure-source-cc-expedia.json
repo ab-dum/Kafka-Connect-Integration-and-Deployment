@@ -1,4 +1,27 @@
 {
   "name": "expedia",
-  "_comment": "Modify configuration for your needs"
+  "config": {
+    "connector.class": "io.confluent.connect.azure.blob.storage.AzureBlobStorageSourceConnector",
+    "format.class": "io.confluent.connect.cloud.storage.source.format.CloudStorageAvroFormat",
+    "tasks.max": "2",
+    "mode": "GENERIC",
+    "topic.regex.list": "expedia:.*",
+    "topics.dir": "topics/expedia",
+    "key.converter": "org.apache.kafka.connect.storage.StringConverter",
+    "value.converter": "io.confluent.connect.avro.AvroConverter",
+    "value.converter.schemas.enable" : "true",
+    "value.converter.schema.registry.url": "http://schemaregistry.confluent.svc.cluster.local:8081",
+    "transforms": "MaskField",
+    "transforms.MaskField.type": "org.apache.kafka.connect.transforms.MaskField$Value",
+    "transforms.MaskField.fields": "date_time",
+    "transforms.MaskField.replacement": "0000-00-00 00:00:00",
+    "errors.log.enable": true,
+    "errors.log.include.messages": true,
+    "azblob.container.name": "data",
+    "azblob.account.name": "stkafconnectwesteurope",
+    "azblob.account.key": "your_account_key",
+    "azblob.poll.interval.ms": "10000",
+    "behavior.on.error": "log",
+    "confluent.topic.bootstrap.servers" : "kafka.confluent-new.svc.cluster.local:9092"
+  }
 }

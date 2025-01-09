@@ -6,7 +6,7 @@ variable "ENV" {
 variable "LOCATION" {
   type = string
   description = "The Azure Region in which all resources in this example should be created."
-  default = "westeurope"
+  default = "eastus2"
 }
 
 variable "BDCC_REGION" {
